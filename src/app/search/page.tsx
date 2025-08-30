@@ -1,158 +1,219 @@
 "use client";
 
 import React, { useState } from "react";
-import axios from "axios";
-import VantaFog from "@/components/VantaFog";
-import { RainbowButton } from "@/components/magicui/rainbow-button";
 import { AuroraText } from "@/components/magicui/aurora-text";
 
-interface GTMResult {
-  strategy_overview: string;
-  market_analysis: string;
-  customer_profiles: string[];
-  value_proposition: string;
-  acquisition_channels: string[];
-  outreach_plan: string;
-  growth_initiatives: string[];
-  optimization_tips: string;
-}
+import { useMemo } from "react";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import ResultsRenderer, {
+    type ApiResultShape,
+} from "@/components/results-renderer";
+
+type FormState = {
+    startup_idea: string;
+    target_market: string;
+    team_composition: string;
+};
+
+const DEFAULTS: FormState = {
+    startup_idea: "",
+    target_market: "",
+    team_composition: "",
+};
 
 export default function GTMStrategyPage() {
-  const [startupIdea, setStartupIdea] = useState<string>("");
-  const [targetMarket, setTargetMarket] = useState<string>("");
-  const [teamComposition, setTeamComposition] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-  const [result, setResult] = useState<GTMResult | null>(null);
-  const [error, setError] = useState<string>("");
+    const [form, setForm] = useState<FormState>(DEFAULTS);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [result, setResult] = useState<ApiResultShape | null>(null);
 
-  const handleGenerate = async () => {
-    setLoading(true);
-    setError("");
-    setResult(null);
+    const disabled = useMemo(() => {
+        return (
+            !form.startup_idea.trim() ||
+            !form.target_market.trim() ||
+            !form.team_composition.trim()
+        );
+    }, [form]);
 
-    try {
-      const response = await axios.post<{ data: string }>(
-        "https://enterpreneaur-977121587860.asia-south2.run.app/run-crew",
-        {
-          startup_idea: startupIdea,
-          target_market: targetMarket,
-          team_composition: teamComposition,
+    async function handleSubmit(e: React.FormEvent) {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        setResult(null);
+
+        try {
+            const res = await fetch(
+                "https://enterpreneaur-977121587860.asia-south2.run.app/run-crew",
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        startup_idea: form.startup_idea,
+                        target_market: form.target_market,
+                        team_composition: form.team_composition,
+                    }),
+                }
+            );
+
+            if (!res.ok) {
+                const text = await res.text().catch(() => "");
+                throw new Error(
+                    `Request failed (${res.status}). ${
+                        text || "Please try again."
+                    }`
+                );
+            }
+
+            const data = await res.json();
+            const normalized: ApiResultShape = {
+                result: data?.result ?? data ?? null,
+            };
+            setResult(normalized);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError("Something went wrong. Please try again.");
+            }
+        } finally {
+            setLoading(false);
         }
-      );
-
-      console.log("API Response:", response.data);
-
-      const raw = response.data.data;
-      const jsonStart = raw.indexOf("```json");
-      const jsonEnd = raw.lastIndexOf("```");
-      const extracted =
-        jsonStart !== -1 && jsonEnd !== -1
-          ? raw.substring(jsonStart + 7, jsonEnd)
-          : raw;
-
-      const parsed: GTMResult = JSON.parse(extracted);
-      setResult(parsed);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to generate GTM strategy. Please try again.");
-    } finally {
-      setLoading(false);
     }
-  };
 
-  return (
-    <div>
-      <VantaFog />
-      <div className="max-w-5xl mx-auto p-6 mt-10 space-y-6">
-        <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-primary">
-          Generate Your <AuroraText>Go-To-Market</AuroraText> Strategy
-        </h1>
-        <p className="text-gray-600">
-          Empower your startup with a tailored GTM plan in minutes. Just provide a few
-          details about your idea, target audience, and team.
-        </p>
+    return (
+        <div>
+            <div className="max-w-5xl mx-auto p-2 mt-10 space-y-6">
+                <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-primary">
+                    Generate Your <AuroraText>Go-To-Market</AuroraText> Strategy
+                </h1>
+                <p className="text-gray-600 ">
+                    Empower your startup with a tailored GTM plan in minutes.
+                    Just provide a few details about your idea, target audience,
+                    and team.
+                </p>
 
-        {/* Input Fields */}
-        <div className="grid grid-cols-1 gap-4 mt-8">
-          <input
-            type="text"
-            value={startupIdea}
-            onChange={(e) => setStartupIdea(e.target.value)}
-            className="p-4 border rounded-md"
-            placeholder="Startup Idea (e.g., AI-powered resume enhancer)"
-          />
+                <div className="grid gap-6">
+                    <Card className="md:col-span-3">
+                        <CardHeader>
+                            <CardTitle className="text-xl">Search</CardTitle>
+                            <CardDescription>
+                                Enter your startup details and run the analysis.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <form
+                                onSubmit={handleSubmit}
+                                className="flex flex-col gap-4"
+                                aria-label="Startup search form"
+                            >
+                                <div className="flex flex-col gap-2">
+                                    <label
+                                        htmlFor="idea"
+                                        className="text-sm font-medium text-foreground"
+                                    >
+                                        Startup idea
+                                    </label>
+                                    <Input
+                                        id="idea"
+                                        placeholder="e.g., AI-powered resume enhancer that tailors resumes to job descriptions"
+                                        value={form.startup_idea}
+                                        onChange={(e) =>
+                                            setForm((f) => ({
+                                                ...f,
+                                                startup_idea: e.target.value,
+                                            }))
+                                        }
+                                    />
+                                </div>
 
-          <input
-            type="text"
-            value={targetMarket}
-            onChange={(e) => setTargetMarket(e.target.value)}
-            className="p-4 border rounded-md"
-            placeholder="Target Market (e.g., Recent graduates in tech)"
-          />
+                                <div className="flex flex-col gap-2">
+                                    <label
+                                        htmlFor="market"
+                                        className="text-sm font-medium text-foreground"
+                                    >
+                                        Target market
+                                    </label>
+                                    <Input
+                                        id="market"
+                                        placeholder="e.g., Recent graduates and job seekers in tech"
+                                        value={form.target_market}
+                                        onChange={(e) =>
+                                            setForm((f) => ({
+                                                ...f,
+                                                target_market: e.target.value,
+                                            }))
+                                        }
+                                    />
+                                </div>
 
-          <input
-            type="text"
-            value={teamComposition}
-            onChange={(e) => setTeamComposition(e.target.value)}
-            className="p-4 border rounded-md"
-            placeholder="Team Composition (e.g., 3 engineers, 1 career coach)"
-          />
-        </div>
+                                <div className="flex flex-col gap-2">
+                                    <label
+                                        htmlFor="team"
+                                        className="text-sm font-medium text-foreground"
+                                    >
+                                        Team composition
+                                    </label>
+                                    <Input
+                                        id="team"
+                                        placeholder="e.g., 3 software engineers and 1 career coach"
+                                        value={form.team_composition}
+                                        onChange={(e) =>
+                                            setForm((f) => ({
+                                                ...f,
+                                                team_composition:
+                                                    e.target.value,
+                                            }))
+                                        }
+                                    />
+                                </div>
 
-        {/* Generate Button */}
-        <RainbowButton
-          variant="outline"
-          onClick={handleGenerate}
-          disabled={loading}
-        >
-          {loading ? "Generating..." : "Generate GTM Strategy"}
-        </RainbowButton>
+                                <div className="flex items-center gap-3">
+                                    <Button
+                                        type="submit"
+                                        disabled={disabled || loading}
+                                        className={loading ? "opacity-80" : ""}
+                                    >
+                                        {loading ? "Running..." : "Run search"}
+                                    </Button>
 
-        {error && <p className="text-red-500 font-medium">{error}</p>}
+                                    {error && (
+                                        <span
+                                            role="status"
+                                            aria-live="polite"
+                                            className="text-sm text-red-600"
+                                        >
+                                            {error}
+                                        </span>
+                                    )}
+                                </div>
+                            </form>
+                        </CardContent>
+                    </Card>
+                </div>
 
-        {/* Display Results */}
-        {result && (
-          <div className="mt-10 space-y-6">
-            <h2 className="text-2xl font-semibold">🚀 Your GTM Strategy</h2>
-            <div className="border p-4 rounded-md shadow-sm bg-white space-y-4">
-              <p><strong>Strategy Overview:</strong> {result.strategy_overview}</p>
-              <p><strong>Market Analysis:</strong> {result.market_analysis}</p>
-              <p><strong>Value Proposition:</strong> {result.value_proposition}</p>
-
-              <div>
-                <strong>Customer Profiles:</strong>
-                <ul className="list-disc list-inside">
-                  {result.customer_profiles.map((profile, idx) => (
-                    <li key={idx}>{profile}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <strong>Acquisition Channels:</strong>
-                <ul className="list-disc list-inside">
-                  {result.acquisition_channels.map((channel, idx) => (
-                    <li key={idx}>{channel}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <p><strong>Outreach Plan:</strong> {result.outreach_plan}</p>
-
-              <div>
-                <strong>Growth Initiatives:</strong>
-                <ul className="list-disc list-inside">
-                  {result.growth_initiatives.map((initiative, idx) => (
-                    <li key={idx}>{initiative}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <p><strong>Optimization Tips:</strong> {result.optimization_tips}</p>
+                <section className="mt-10">
+                    {!result ? (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>No results yet</CardTitle>
+                                <CardDescription>
+                                    Run a search to see results here.
+                                </CardDescription>
+                            </CardHeader>
+                        </Card>
+                    ) : (
+                        <ResultsRenderer data={result} />
+                    )}
+                </section>
             </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+        </div>
+    );
 }

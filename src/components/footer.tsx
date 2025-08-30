@@ -2,9 +2,9 @@ import React from "react";
 
 function Footer() {
     return (
-        <div>
-            <footer className="px-4 md:px-36 dark:bg-gray-900 text-gray-700 bg-zinc-200/30 backdrop-blur-sm py-10 mt-20">
-                <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="">
+            <footer className="px-4 md:px-6 dark:bg-gray-900 text-gray-700 bg-zinc-200/30 backdrop-blur-sm py-10 mt-20">
+                <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
                     {/* Logo + Description */}
                     <div>
                         <h3 className="text-xl font-semibold text-gray-900 dark:text-white">

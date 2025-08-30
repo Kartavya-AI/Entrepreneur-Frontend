@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/accordion";
 import { Marquee } from "@/components/magicui/marquee";
 
+
+
 const reviews = [
     {
         name: "Arjun Malhotra",
@@ -53,7 +55,6 @@ const reviews = [
         body: "As a first-time founder, I had no idea where to start. Copilot walked me through every step and gave me the confidence to launch."
     }
 ];
-
 
 const firstRow = reviews.slice(0, reviews.length / 2);
 const secondRow = reviews.slice(reviews.length / 2);
@@ -212,7 +213,7 @@ export default function Home() {
                 </div>
             </section>
 
-          <section className="flex mt-10 flex-col md:flex-row items-center justify-between px-4 md:px-36 py-12">
+          <section className="flex mt-10 flex-col md:flex-row items-center justify-between gap-5 px-4 md:px-36 py-12">
     {/* Text Section */}
     <div className="md:w-1/2 text-center md:text-left space-y-4 order-2 md:order-1">
         <h2 className="text-3xl md:text-5xl font-bold text-primary">
@@ -222,7 +223,7 @@ export default function Home() {
             Entrepreneur Copilot helps you analyze your market, define your ideal customer, and create a step-by-step GTM plan — so you can launch faster, smarter, and with higher ROI.
         </p>
         <Link href="/search">
-            <ShimmerButton className="shadow-2xl">
+            <ShimmerButton className="shadow-2xl flex justify-center mx-auto md:mx-0">
                 <span className="whitespace-pre-wrap text-center text-sm font-medium leading-none tracking-tight text-white dark:from-white dark:to-slate-900/10 lg:text-lg">
                     Build My GTM Plan
                 </span>
